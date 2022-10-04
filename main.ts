@@ -8,8 +8,8 @@ radio.onReceivedNumber(function (receivedNumber) {
         messages[i] = message % 10
         message = Math.trunc(message / 10)
         if (messages[i] == 1) {
-            if (servo_angles[i] < 180) {
-                servo_angles[i] = servo_angles[i] + 15
+            if (servo_angles[i] < SERVO_RANGES_MAX[i]) {
+                servo_angles[i] = servo_angles[i] + SERVO_ANGLE_STEPS[i]
                 ServoNumber = i
                 basic.showLeds(`
                     . . # . .
@@ -20,8 +20,8 @@ radio.onReceivedNumber(function (receivedNumber) {
                     `)
             }
         } else if (messages[i] == 9) {
-            if (servo_angles[i] > 0) {
-                servo_angles[i] = servo_angles[i] - 15
+            if (servo_angles[i] > SERVO_RANGES_MIN[i]) {
+                servo_angles[i] = servo_angles[i] - SERVO_ANGLE_STEPS[i]
                 ServoNumber = i
                 basic.showLeds(`
                     . . # . .
@@ -38,7 +38,23 @@ input.onButtonPressed(Button.A, function () {
     servo_calibration()
 })
 function MoveServo () {
-	
+    if (ServoNumber == 0) {
+        pins.servoWritePin(AnalogPin.P9, servo_angles[0])
+    } else if (ServoNumber == 1) {
+        pins.servoWritePin(AnalogPin.P12, servo_angles[1])
+    } else if (ServoNumber == 2) {
+        pins.servoWritePin(AnalogPin.P13, servo_angles[2])
+    } else if (ServoNumber == 3) {
+        pins.servoWritePin(AnalogPin.P14, servo_angles[3])
+    } else if (ServoNumber == 4) {
+        pins.servoWritePin(AnalogPin.P15, servo_angles[4])
+    } else if (ServoNumber == 5) {
+        pins.servoWritePin(AnalogPin.P16, servo_angles[5])
+    }
+    s3count += 1
+    if (s3count % 10000 == 0) {
+        pins.servoWritePin(AnalogPin.P14, servo_angles[3])
+    }
 }
 input.onButtonPressed(Button.B, function () {
     for (let i = 0; i <= 4; i++) {
@@ -155,8 +171,12 @@ function servo_calibration () {
         # # # # #
         `)
 }
+let s3count = 0
 let message = 0
 let ServoNumber = 0
+let SERVO_ANGLE_STEPS: number[] = []
+let SERVO_RANGES_MAX: number[] = []
+let SERVO_RANGES_MIN: number[] = []
 let servo_angles: number[] = []
 let messages: number[] = []
 let debug = 0
@@ -186,20 +206,32 @@ servo_angles = [
 90,
 90
 ]
+SERVO_RANGES_MIN = [
+0,
+0,
+0,
+0,
+0,
+35
+]
+SERVO_RANGES_MAX = [
+180,
+180,
+180,
+180,
+180,
+120
+]
+SERVO_ANGLE_STEPS = [
+10,
+15,
+15,
+10,
+5,
+15
+]
 basic.forever(function () {
-    if (ServoNumber == 0) {
-        pins.servoWritePin(AnalogPin.P9, servo_angles[0])
-    } else if (ServoNumber == 1) {
-        pins.servoWritePin(AnalogPin.P12, servo_angles[1])
-    } else if (ServoNumber == 2) {
-        pins.servoWritePin(AnalogPin.P13, servo_angles[2])
-    } else if (ServoNumber == 3) {
-        pins.servoWritePin(AnalogPin.P14, servo_angles[3])
-    } else if (ServoNumber == 4) {
-        pins.servoWritePin(AnalogPin.P15, servo_angles[4])
-    } else if (ServoNumber == 5) {
-        pins.servoWritePin(AnalogPin.P16, servo_angles[5])
-    }
+    MoveServo()
     if (debug == 1) {
         serial.writeValue("servonumber", ServoNumber)
         serial.writeNumbers([
